@@ -23,7 +23,7 @@ def run_model(model, rgbs, N, sw):
 
     B, S, C, H, W = rgbs.shape
     rgbs_ = rgbs.reshape(B*S, C, H, W)
-    H_, W_ = 360, 640
+    H_, W_ = 786,812
     rgbs_ = F.interpolate(rgbs_, (H_, W_), mode='bilinear')
     H, W = H_, W_
     rgbs = rgbs_.reshape(B, S, C, H, W)
@@ -91,7 +91,7 @@ def main():
     S = 8
     N = 16**2 # number of points to track
 
-    filenames = glob.glob('./demo_images/*.jpg')
+    filenames = glob.glob('./SP250/*.jpg')
     filenames = sorted(filenames)
     print('filenames', filenames)
     max_iters = len(filenames)//S # run each unique subsequence
