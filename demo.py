@@ -103,7 +103,7 @@ def main():
     model_name += "_%s" % exp_name
     import datetime
     model_date = datetime.datetime.now().strftime('%H:%M:%S')
-    model_name = model_name + '_' + model_date
+    
     print('model_name', model_name)
     
     log_dir = 'logs_demo'

@@ -130,12 +130,11 @@ def main():
 
     log_freq = 1 # when to produce visualizations 
     
-    ## autogen a name
     model_name = "%02d_%d_%d" % (B, S, N)
     model_name += "_%s" % exp_name
     import datetime
     model_date = datetime.datetime.now().strftime('%H:%M:%S')
-    model_name = model_name + '_' + model_date
+    
     print('model_name', model_name)
     
     log_dir = 'logs_chain_demo'
