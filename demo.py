@@ -89,7 +89,7 @@ def main():
     ## choose hyps
     B = 1
     S = 8
-    N = 100**2 # number of points to track
+    N = 50**2 # number of points to track
 
     filenames = glob.glob('./SP250/*.jpg')
     filenames = sorted(filenames)
