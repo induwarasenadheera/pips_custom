@@ -14,6 +14,7 @@ from utils.basic import print_, print_stats
 import torch
 from tensorboardX import SummaryWriter
 import torch.nn.functional as F
+import imageio
 
 random.seed(125)
 np.random.seed(125)
@@ -23,7 +24,7 @@ def run_model(model, rgbs, N, sw):
 
     B, S, C, H, W = rgbs.shape
     rgbs_ = rgbs.reshape(B*S, C, H, W)
-    H_, W_ = 786,812
+    H_, W_ = 288, 384
     rgbs_ = F.interpolate(rgbs_, (H_, W_), mode='bilinear')
     H, W = H_, W_
     rgbs = rgbs_.reshape(B, S, C, H, W)
@@ -38,12 +39,16 @@ def run_model(model, rgbs, N, sw):
 
     print_stats('rgbs', rgbs)
     preds, preds_anim, vis_e, stats = model(xy, rgbs, iters=6)
-    trajs_e = preds[-1]
+    trajs_e = preds[-1] # B, S, N, 2
     print_stats('trajs_e', trajs_e)
+
+    
+
     
     pad = 50
     rgbs = F.pad(rgbs.reshape(B*S, 3, H, W), (pad, pad, pad, pad), 'constant', 0).reshape(B, S, 3, H+pad*2, W+pad*2)
     trajs_e = trajs_e + pad
+    
     
     if sw is not None and sw.save_this:
         linewidth = 2
@@ -55,7 +60,9 @@ def run_model(model, rgbs, N, sw):
         # visualize the trajs alone
         o3 = sw.summ_traj2ds_on_rgbs('outputs/trajs_on_black', trajs_e[0:1], torch.ones_like(rgbs[0:1])*-0.5, cmap='spring', linewidth=linewidth)
         # concat these for a synced wide vis
+        print("o",o1.shape, o2.shape, o3.shape)
         wide_cat = torch.cat([o1, o2, o3], dim=-1)
+        print("wide_cat",wide_cat.shape)
         sw.summ_rgbs('outputs/wide_cat', wide_cat.unbind(1))
 
         # write to disk, in case that's more convenient
@@ -64,7 +71,17 @@ def run_model(model, rgbs, N, sw):
         wide_list = [Image.fromarray(wide) for wide in wide_list]
         out_fn = './out_%d.gif' % sw.global_step
         wide_list[0].save(out_fn, save_all=True, append_images=wide_list[1:])
+        
         print('saved %s' % out_fn)
+        
+        video=np.zeros((B,S,750, 500,3), dtype=np.uint8)
+        for i in range(B):
+            for j in range(S):
+                for k in range(N):
+                    video[i,j,int(trajs_e[i,j,k,0]-pad):int(trajs_e[i,j,k,0]-pad+5),int(trajs_e[i,j,k,1]-pad):int(trajs_e[i,j,k,1]-pad+5),:]=int(255)
+           
+            data8 = (np.clip(video[i], 0, 255)).astype(np.uint8)
+            imageio.mimwrite('video_%d_%d.mp4' % (i, j), data8,fps=1)
 
         # alternate vis
         sw.summ_traj2ds_on_rgbs2('outputs/trajs_on_rgbs2', trajs_e[0:1], vis_e[0:1], utils.improc.preprocess_color(rgbs[0:1]))
@@ -89,7 +106,7 @@ def main():
     ## choose hyps
     B = 1
     S = 8
-    N = 16**2 # number of points to track
+    N = 50**2 # number of points to track
 
     filenames = glob.glob('./SP250/*.jpg')
     filenames = sorted(filenames)
@@ -128,7 +145,7 @@ def main():
             writer=writer_t,
             global_step=global_step,
             log_freq=log_freq,
-            fps=5,
+            fps=2,
             scalar_freq=int(log_freq/2),
             just_gif=True)
 
